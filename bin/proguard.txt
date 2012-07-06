@@ -1,6 +1,0 @@
-# view AndroidManifest.xml #generated:17
--keep class com.pythonistas.akrellm.AKrellmPreferencesActivity { <init>(...); }
-
-# view AndroidManifest.xml #generated:7
--keep class com.pythonistas.akrellm.AKrellmWallPaperService { <init>(...); }
-
