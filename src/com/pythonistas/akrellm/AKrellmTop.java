@@ -3,8 +3,16 @@ package com.pythonistas.akrellm;
 import java.io.RandomAccessFile;
 import java.io.IOException;
 import java.lang.Float;
+import java.text.DateFormat;
+import java.util.Date;
 
 public class AKrellmTop {
+    private String currentDateTimeString = DateFormat.getDateTimeInstance().format(new Date());
+    
+    public String date(){
+        currentDateTimeString = DateFormat.getDateTimeInstance().format(new Date());
+        return currentDateTimeString;
+    }
 
     public float cpu() {
         try {

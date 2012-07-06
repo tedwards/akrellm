@@ -2,6 +2,7 @@ package com.pythonistas.akrellm;
 
 import java.lang.Float;
 
+
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;  
 import android.graphics.BitmapFactory;  
@@ -52,13 +53,15 @@ public class AKrellmWallPaperService extends WallpaperService {
         private float sysmem;
         private float sysbattery;
         private float systemp;
+        private String date;
         private int width;
         private int height;
+        private int pulseCounter;
 
         private Bitmap fillBMP;  
         private BitmapShader fillBMPshader;  
         private Matrix m = new Matrix();   
-
+        
 
         public AKrellmWallPaperEngine() {
             SharedPreferences prefs = PreferenceManager
@@ -66,7 +69,8 @@ public class AKrellmWallPaperService extends WallpaperService {
             maxNumber = Integer
                 .valueOf(prefs.getString("numberOfCircles","4"));
             touchEnabled = prefs.getBoolean("touch", false);
-
+            pulseCounter=0;
+            
             paint.setAntiAlias(true);
             paint.setColor(Color.argb(148, 255, 255, 255));
             paint.setStyle(Paint.Style.STROKE);
@@ -90,7 +94,7 @@ public class AKrellmWallPaperService extends WallpaperService {
             cpaint.setColor(Color.argb(248, 255, 255, 255));
             cpaint.setStyle(Paint.Style.STROKE);
             cpaint.setStrokeJoin(Paint.Join.ROUND);
-            cpaint.setStrokeWidth(30f);
+            cpaint.setStrokeWidth(15f);
             //cpaint.setShader(fillBMPshader);
 
 
@@ -98,7 +102,7 @@ public class AKrellmWallPaperService extends WallpaperService {
             cpaintBlur.setColor(Color.argb(235, 74, 138, 255));
             cpaintBlur.setStyle(Paint.Style.STROKE);
             cpaintBlur.setStrokeJoin(Paint.Join.ROUND);
-            cpaintBlur.setStrokeWidth(40f);
+            cpaintBlur.setStrokeWidth(30f);
             cpaintBlur.setMaskFilter(new BlurMaskFilter(15, BlurMaskFilter.Blur.NORMAL));
             //cpaintBlur.setShader(fillBMPshader);
 
@@ -165,10 +169,14 @@ public class AKrellmWallPaperService extends WallpaperService {
             try {
                 canvas = holder.lockCanvas();
                 if (canvas != null) {
+                    pulseCounter=pulseCounter+1;
+                    pulseCounter=pulseCounter%5;
+                    cpaintBlur.setMaskFilter(new BlurMaskFilter(15+pulseCounter, BlurMaskFilter.Blur.NORMAL));
                     getStats();
                     drawBackground(canvas);
                     drawCircles(canvas);
                     drawStats(canvas);
+                    drawDate(canvas);
                 }
             } finally {
                 if (canvas != null)
@@ -186,6 +194,7 @@ public class AKrellmWallPaperService extends WallpaperService {
             sysmem = top.meminfo();
             sysbattery = top.battery();
             systemp = top.temp();
+            date = top.date();
 
             try {
                 Thread.sleep(1000);
@@ -203,28 +212,44 @@ public class AKrellmWallPaperService extends WallpaperService {
             //canvas.drawRect(rect, blackpaint);
 
             //draw load
-            rect.set(width-20, height-20, width+20, height+20);
+            int step = 55;
+            int pos = 20;
+            rect.set(width-pos, height-pos, width+pos, height+pos);
             canvas.drawArc(rect, -90, 360*(sysload.one/2), false, cpaint);
-            canvas.drawArc(rect, -90, 360*(sysload.one/2), false, cpaintBlur);
+            canvas.drawArc(rect, -95, 360*(sysload.one/2)+10, false, cpaintBlur);
 
-            rect.set(width-60, height-60, width+60, height+60);
+            pos += step;
+            rect.set(width-pos, height-pos, width+pos, height+pos);
             canvas.drawArc(rect, -90, 360*syscpu, false, cpaint);
-            canvas.drawArc(rect, -90, 360*syscpu, false, cpaintBlur);
+            canvas.drawArc(rect, -95, 360*syscpu+10, false, cpaintBlur);
             
-            rect.set(width-100, height-100, width+100, height+100);
+            pos += step;
+            rect.set(width-pos, height-pos, width+pos, height+pos);
             canvas.drawArc(rect, -90, 360*sysmem, false, cpaint);
-            canvas.drawArc(rect, -90, 360*sysmem, false, cpaintBlur);
+            canvas.drawArc(rect, -95, 360*sysmem+10, false, cpaintBlur);
             
-            rect.set(width-140, height-140, width+140, height+140);
+            pos += step;
+            rect.set(width-pos, height-pos, width+pos, height+pos);
             canvas.drawArc(rect, -90, 360*(systemp/50000.0f), false, cpaint);
-            canvas.drawArc(rect, -90, 360*(systemp/50000.0f), false, cpaintBlur);
-            
-            rect.set(width-180, height-180, width+180, height+180);
+            canvas.drawArc(rect, -95, 360*(systemp/50000.0f)+10, false, cpaintBlur);
+
+            pos += step;
+            rect.set(width-pos, height-pos, width+pos, height+pos);
             canvas.drawArc(rect, -90, 360*(sysbattery/100.0f), false, cpaint);
-            canvas.drawArc(rect, -90, 360*(sysbattery/100.0f), false, cpaintBlur);
+            canvas.drawArc(rect, -95, 360*(sysbattery/100.0f)+10, false, cpaintBlur);
 
         }
 
+        private void drawLines(Canvas canvas) {
+            int cstep = 55;
+            int cpos = 20;
+            int spos = 100;
+            
+            
+            cpos += cstep;
+            spos+=40;
+            
+        }
         
         private void drawStats(Canvas canvas) {
 
@@ -257,6 +282,12 @@ public class AKrellmWallPaperService extends WallpaperService {
             canvas.drawText(battString, 20,pos, paintBlur);
             pos+=40;
 
+        }
+
+        private void drawDate(Canvas canvas) {
+
+            canvas.drawText(date, 20 , 800, paint);
+            canvas.drawText(date, 20, 800, paintBlur);
         }
     }
 }
