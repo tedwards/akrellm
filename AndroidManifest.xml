@@ -16,7 +16,7 @@
       </service>
       <activity android:label="@string/app_name" 
                 android:name=".AKrellmPreferencesActivity"
-                android:theme="@android:style/Theme.Light.WallpaperSettings"
+                android:theme="@android:style/Theme.WallpaperSettings"
                 android:exported="true" />
     </application>
     <uses-sdk android:minSdkVersion="10" />

@@ -4,4 +4,15 @@
             android:key="color"
             android:defaultValue="0xff4a8aff" 
             android:title="Pick a color" />
+        <CheckBoxPreference android:key="hourFormat"
+                            android:defaultValue="true"
+                            android:summaryOff="Display 12 hour clock"
+                            android:summaryOn="Display 24 hour clock"
+                            android:title="Hour Format"></CheckBoxPreference>
+        <CheckBoxPreference android:key="activeMemory"
+                            android:defaultValue="true"
+                            android:summaryOff="Display total memory allocated"
+                            android:summaryOn="Display active memory allocated"
+                            android:title="Active Memory"></CheckBoxPreference>
+        
 </PreferenceScreen>

@@ -65,7 +65,6 @@ public class AKrellmWallPaperService extends WallpaperService {
 
         private RectF rect = new RectF();
         private boolean visible = true;
-        private int maxNumber;
         private AKrellmTop top = new AKrellmTop();
         private AKrellmLoad sysload;
         private float syscpu;
@@ -77,10 +76,13 @@ public class AKrellmWallPaperService extends WallpaperService {
         private int height;
         private int pulseCounter;
         private int touchState = 0;
+
         private int color;
         private int red;
         private int green;
         private int blue;
+        private boolean active;
+        private boolean hour24;
 
         private Bitmap fillBMP;  
         private BitmapShader fillBMPshader;  
@@ -95,13 +97,14 @@ public class AKrellmWallPaperService extends WallpaperService {
         public AKrellmWallPaperEngine() {
             SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(AKrellmWallPaperService.this);
-            maxNumber = Integer
-                .valueOf(prefs.getString("numberOfCircles","4"));
+            
             //touchEnabled = prefs.getBoolean("touch", false);
             color = prefs.getInt("color",0xff4a8aff);
             red = Color.red(color);
             green = Color.green(color);
             blue = Color.blue(color);
+            active = prefs.getBoolean("activeMemory", true);
+            hour24 = prefs.getBoolean("hourFormat", true);
 
             pulseCounter=0;
             
@@ -190,7 +193,7 @@ public class AKrellmWallPaperService extends WallpaperService {
 
             bmPaint.setAntiAlias(true);
             //bmPaint.setAlpha(35);
-            bmPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.MULTIPLY));
+            bmPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.OVERLAY));
 
             cpaint.setAntiAlias(true);
             cpaint.setColor(Color.argb(248, 255, 255, 255));
@@ -305,7 +308,7 @@ public class AKrellmWallPaperService extends WallpaperService {
                 if (canvas != null) {
                     canvas.drawColor(Color.BLACK);
                     //draw the old values before updating
-                    drawCircles(canvas);
+                    drawOldCircles(canvas);
                     getStats();
                     drawBackground(canvas);
                     drawCircles(canvas);
@@ -335,7 +338,7 @@ public class AKrellmWallPaperService extends WallpaperService {
         private void getStats(){
             syscpu = top.cpu();
             sysload = top.load();
-            sysmem = top.meminfo();
+            sysmem = top.meminfo(active);
             sysbattery = top.battery();
             systemp = top.temp();
             //systemp = 0;
@@ -383,6 +386,36 @@ public class AKrellmWallPaperService extends WallpaperService {
             pos += step;
             rect.set(width-pos, height-pos, width+pos, height+pos);
             canvas.drawArc(rect, -90, 360*(sysbattery/100.0f), false, cpaint);
+            canvas.drawArc(rect, -95, 360*(sysbattery/100.0f)+10, false, cpaintBlur);
+
+        }
+
+        private void drawOldCircles(Canvas canvas) {
+            //rect.set(width-400, height-400, width+400, height+400);
+            //canvas.drawRect(rect, blackpaint);
+
+            //draw load
+            int step = 55;
+            int pos = 20;
+            rect.set(width-pos, height-pos, width+pos, height+pos);
+            canvas.drawArc(rect, -95, 360*(sysload.one/2)+10, false, cpaintBlur);
+
+            pos += step;
+            rect.set(width-pos, height-pos, width+pos, height+pos);
+            canvas.drawArc(rect, -95, 360*syscpu+10, false, cpaintBlur);
+            
+            pos += step;
+            rect.set(width-pos, height-pos, width+pos, height+pos);
+            canvas.drawArc(rect, -95, 360*sysmem+10, false, cpaintBlur);
+
+            if (systemp > 0){
+                pos += step;
+                rect.set(width-pos, height-pos, width+pos, height+pos);
+                canvas.drawArc(rect, -95, 360*(systemp/50000.0f)+10, false, cpaintBlur);
+            }
+            
+            pos += step;
+            rect.set(width-pos, height-pos, width+pos, height+pos);
             canvas.drawArc(rect, -95, 360*(sysbattery/100.0f)+10, false, cpaintBlur);
 
         }
@@ -489,8 +522,11 @@ public class AKrellmWallPaperService extends WallpaperService {
             canvas.drawText(dom, 200, 230, domPaint);
             canvas.drawText(dom, 200, 230, domPaintBlur);
 
-
-            x = calendar.get(Calendar.HOUR_OF_DAY);
+            if (hour24){
+                x = calendar.get(Calendar.HOUR_OF_DAY);
+            } else {
+                x = calendar.get(Calendar.HOUR);
+            }
             String hour = "";
             if (x<10){
                 hour = "0"+x;

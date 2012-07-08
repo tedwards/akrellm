@@ -5,9 +5,11 @@ import java.io.IOException;
 import java.lang.Float;
 import java.text.DateFormat;
 import java.util.Date;
+import android.util.Log;
 
 public class AKrellmTop {
     private boolean tempFound=true;
+    private static final String TAG = "AKrellm:";
 
     private String currentDateTimeString = DateFormat.getDateTimeInstance().format(new Date());
     
@@ -74,22 +76,40 @@ public class AKrellmTop {
     
     } 
 
-    public float meminfo() {
+    public float meminfo(boolean active) {
         //need to add option for active_memory
         try {
             RandomAccessFile reader = new RandomAccessFile("/proc/meminfo", "r");
             String mem = reader.readLine();
             String[] toks = mem.split("\\s+");
             float memtotal = new Float(toks[1]);
-
-            mem = reader.readLine();
-            toks = mem.split("\\s+");
-            float memfree = new Float(toks[1]);
-        
-            reader.close();
-            float mempercent = (memtotal-memfree) / memtotal;
             
-            return mempercent;
+            if (! active){
+                mem = reader.readLine();
+                toks = mem.split("\\s+");
+                float memfree = new Float(toks[1]);
+                
+                reader.close();
+                float mempercent = (memtotal-memfree) / memtotal;
+                return mempercent;
+            }
+            else {
+                float memactive=0;
+                mem = reader.readLine();
+                toks = mem.split("\\s+");
+                while ( ! toks[0].equals("Active:") ){
+                    mem = reader.readLine();
+                    if (mem.length()==0){
+                        break;
+                    }
+                    toks = mem.split("\\s+");
+                    
+                }
+                memactive = new Float(toks[1]);
+                reader.close();
+                float mempercent = memactive/memtotal;
+                return mempercent;
+            }
 
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -97,6 +117,7 @@ public class AKrellmTop {
         }
     
     } 
+
 
     public float battery() {
         // /sys/class/power_supply/battery/capacity 
