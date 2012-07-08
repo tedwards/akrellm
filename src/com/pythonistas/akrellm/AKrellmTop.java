@@ -7,6 +7,8 @@ import java.text.DateFormat;
 import java.util.Date;
 
 public class AKrellmTop {
+    private boolean tempFound=true;
+
     private String currentDateTimeString = DateFormat.getDateTimeInstance().format(new Date());
     
     public String date(){
@@ -114,14 +116,20 @@ public class AKrellmTop {
     
     public float temp() {
         // /sys/class/hwmon/hwmon0/device/temp1_input
-        try {
-            RandomAccessFile reader = new RandomAccessFile("/sys/class/hwmon/hwmon0/device/temp1_input", "r");
-            float temp = new Float(reader.readLine());
-            reader.close();
-            return temp;
+        if (tempFound) {
+            try {
+                RandomAccessFile reader = new RandomAccessFile("/sys/class/hwmon/hwmon0/device/temp1_input", "r");
+                float temp = new Float(reader.readLine());
+                reader.close();
+                return temp;
 
-        } catch (IOException ex) {
-            ex.printStackTrace();
+            } catch (IOException ex) {
+                tempFound=false;
+                ex.printStackTrace();
+                return 0;
+            }
+        }
+        else {
             return 0;
         }
     }

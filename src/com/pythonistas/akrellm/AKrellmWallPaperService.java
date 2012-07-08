@@ -21,12 +21,17 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 import android.graphics.Shader;  
 
+import android.app.WallpaperManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.service.wallpaper.WallpaperService;
+import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
-
+import android.view.WindowManager;
+import android.util.DisplayMetrics;
+import android.util.Log;
 
 public class AKrellmWallPaperService extends WallpaperService {
     @Override
@@ -61,7 +66,6 @@ public class AKrellmWallPaperService extends WallpaperService {
         private RectF rect = new RectF();
         private boolean visible = true;
         private int maxNumber;
-        private boolean touchEnabled;
         private AKrellmTop top = new AKrellmTop();
         private AKrellmLoad sysload;
         private float syscpu;
@@ -72,22 +76,41 @@ public class AKrellmWallPaperService extends WallpaperService {
         private int width;
         private int height;
         private int pulseCounter;
-        private boolean toDrawDate=false;
+        private int touchState = 0;
+        private int color;
+        private int red;
+        private int green;
+        private int blue;
 
         private Bitmap fillBMP;  
         private BitmapShader fillBMPshader;  
         private Matrix m = new Matrix();   
         private Path linePath = new Path();
 
+        private float touchX;
+        private float touchY;
+
+        private static final String TAG = "AKrellm:";
 
         public AKrellmWallPaperEngine() {
             SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(AKrellmWallPaperService.this);
             maxNumber = Integer
                 .valueOf(prefs.getString("numberOfCircles","4"));
-            touchEnabled = prefs.getBoolean("touch", false);
+            //touchEnabled = prefs.getBoolean("touch", false);
+            color = prefs.getInt("color",0xff4a8aff);
+            red = Color.red(color);
+            green = Color.green(color);
+            blue = Color.blue(color);
+
             pulseCounter=0;
             
+            DisplayMetrics metrics = new DisplayMetrics();  
+            Display display = ((WindowManager) getSystemService(WINDOW_SERVICE)).getDefaultDisplay();  
+            display.getMetrics(metrics);  
+            width = display.getWidth() / 2;
+            height = display.getHeight() / 2 ;
+
             paint.setAntiAlias(true);
             paint.setColor(Color.argb(148, 255, 255, 255));
             paint.setStyle(Paint.Style.STROKE);
@@ -96,7 +119,7 @@ public class AKrellmWallPaperService extends WallpaperService {
             paint.setTextSize(20);
 
             paintBlur.set(paint);
-            paintBlur.setColor(Color.argb(135, 74, 138, 255));
+            paintBlur.setColor(Color.argb(135, red, green, blue));
             paintBlur.setStyle(Paint.Style.STROKE);
             paintBlur.setStrokeJoin(Paint.Join.ROUND);
             paintBlur.setStrokeWidth(5f);
@@ -112,7 +135,7 @@ public class AKrellmWallPaperService extends WallpaperService {
             monthPaint.setTextSize(60);
 
             monthPaintBlur.set(paint);
-            monthPaintBlur.setColor(Color.argb(135, 74, 138, 255));
+            monthPaintBlur.setColor(Color.argb(135, red, green, blue));
             monthPaintBlur.setStyle(Paint.Style.STROKE);
             monthPaintBlur.setStrokeJoin(Paint.Join.ROUND);
             monthPaintBlur.setStrokeWidth(15f);
@@ -127,7 +150,7 @@ public class AKrellmWallPaperService extends WallpaperService {
             dowPaint.setTextSize(75);
 
             dowPaintBlur.set(paint);
-            dowPaintBlur.setColor(Color.argb(135, 74, 138, 255));
+            dowPaintBlur.setColor(Color.argb(135, red, green, blue));
             dowPaintBlur.setStyle(Paint.Style.STROKE);
             dowPaintBlur.setStrokeJoin(Paint.Join.ROUND);
             dowPaintBlur.setStrokeWidth(5f);
@@ -142,7 +165,7 @@ public class AKrellmWallPaperService extends WallpaperService {
             domPaint.setTextSize(180);
 
             domPaintBlur.set(paint);
-            domPaintBlur.setColor(Color.argb(135, 74, 138, 255));
+            domPaintBlur.setColor(Color.argb(135, red, green, blue));
             domPaintBlur.setStyle(Paint.Style.STROKE);
             domPaintBlur.setStrokeJoin(Paint.Join.ROUND);
             domPaintBlur.setStrokeWidth(15f);
@@ -157,7 +180,7 @@ public class AKrellmWallPaperService extends WallpaperService {
             tyPaint.setTextSize(80);
 
             tyPaintBlur.set(paint);
-            tyPaintBlur.setColor(Color.argb(135, 74, 138, 255));
+            tyPaintBlur.setColor(Color.argb(135, red, green, blue));
             tyPaintBlur.setStyle(Paint.Style.STROKE);
             tyPaintBlur.setStrokeJoin(Paint.Join.ROUND);
             tyPaintBlur.setStrokeWidth(5f);
@@ -178,7 +201,7 @@ public class AKrellmWallPaperService extends WallpaperService {
 
 
             cpaintBlur.set(paint);
-            cpaintBlur.setColor(Color.argb(235, 74, 138, 255));
+            cpaintBlur.setColor(Color.argb(235, red, green, blue));
             cpaintBlur.setStyle(Paint.Style.STROKE);
             cpaintBlur.setStrokeJoin(Paint.Join.ROUND);
             cpaintBlur.setStrokeWidth(30f);
@@ -195,7 +218,7 @@ public class AKrellmWallPaperService extends WallpaperService {
 
 
             lpaintBlur.set(paint);
-            lpaintBlur.setColor(Color.argb(135, 24, 88, 235));
+            lpaintBlur.setColor(Color.argb(135, red, green, blue));
             lpaintBlur.setStyle(Paint.Style.STROKE);
             lpaintBlur.setStrokeJoin(Paint.Join.ROUND);
             lpaintBlur.setStrokeWidth(5f);
@@ -227,9 +250,9 @@ public class AKrellmWallPaperService extends WallpaperService {
 
         @Override
         public void onSurfaceDestroyed(SurfaceHolder holder) {
-            super.onSurfaceDestroyed(holder);
             this.visible = false;
             handler.removeCallbacks(drawRunner);
+            super.onSurfaceDestroyed(holder);
         }
         
         @Override
@@ -237,45 +260,42 @@ public class AKrellmWallPaperService extends WallpaperService {
                                          int width, int height) {
             this.width = width/2;
             this.height = height/2;
+            this.defineLines();
             super.onSurfaceChanged(holder, format, width, height);
         }
-        
+
+
         @Override
-        public void onTouchEvent(MotionEvent event) {
-            if ( (touchEnabled) && (event.getAction() == MotionEvent.ACTION_DOWN)) {
+        public Bundle onCommand(String action, int x, int y, int z, Bundle extras, boolean resultRequested) {
+            if (action.equals(WallpaperManager.COMMAND_TAP)) {
                 handler.removeCallbacks(drawRunner);
-                float x = event.getX();
-                float y = event.getY();
-                // SurfaceHolder holder = getSurfaceHolder();
-                // Canvas canvas = null;
-                // try {
-                //     canvas = holder.lockCanvas();
-                //     if (canvas != null){
-                //         canvas.drawColor(Color.BLACK);
-                toDrawDate = ! toDrawDate;
-                //         drawCircles(canvas);
-                //         drawBackground(canvas);
-                //         drawCircles(canvas);
-                //         if ( ! toDrawDate ) {
-                //             drawStats(canvas);
-                //             drawLines(canvas);
-                //         }
-                //         else {
-                //             drawDate(canvas);
-                //         }
-                        
-                //     }
-                // } finally {
-                //     if (canvas != null)
-                //         holder.unlockCanvasAndPost(canvas);
-                // }
+                touchState = (touchState+1) %3;
                 if (visible){
                     handler.post(drawRunner);
                 }
-                
-                super.onTouchEvent(event);
+
             }
+            return null;
         }
+        
+        // @Override
+        // public void onTouchEvent(MotionEvent event) {
+        //     if ( (event.getAction() == MotionEvent.ACTION_DOWN)) {
+        //         handler.removeCallbacks(drawRunner);
+        //         touchX = event.getX();
+        //         touchY = event.getY();
+        //     }
+            
+        //     else if ( (event.getAction() == MotionEvent.ACTION_UP)) {
+        //         if ( (touchX==event.getX()) && (touchY==event.getY()) && (event.getEventTime()-event.getDownTime()<1250)) {
+        //             touchState = (touchState+1) %3;
+        //                 if (visible){
+        //                     handler.post(drawRunner);
+        //                 }
+        //             }
+        //     }
+        //     super.onTouchEvent(event);
+        // }
         
         private void draw() {
             SurfaceHolder holder = getSurfaceHolder();
@@ -289,12 +309,17 @@ public class AKrellmWallPaperService extends WallpaperService {
                     getStats();
                     drawBackground(canvas);
                     drawCircles(canvas);
-                    if ( ! toDrawDate ) {
+                    switch ( touchState ) {
+                    case 0:
+                        drawDate(canvas);
+                        break;
+                    case 1:
+                        drawStats(canvas);
+                        break;
+                    case 2:
                         drawStats(canvas);
                         drawLines(canvas);
-                    }
-                    else {
-                    drawDate(canvas);
+                        break;
                     }
                 }
             } finally {
@@ -363,17 +388,19 @@ public class AKrellmWallPaperService extends WallpaperService {
         }
 
         private void defineLines() {
-            int cypos = 450;
-            int cystep = -55;
-            int cxpos = 290;
+            Log.d(TAG,"Height is "+height);
+            Log.d(TAG,"Width is "+width);
+            int cypos = height-30;
+            int cystep = -56;
+            int cxpos = width+20;
             int cxstep = -5;
 
             int sypos = 135;
             int systep = 30;
-            int sxpos = 380;
+            int sxpos = width+80;
             int sxstep = -30;
             
-
+            linePath.reset();
             for (int x=1; x<=5; x++) {
                 if ( (systemp!=0) || (x!=4)){
                     linePath.moveTo(100, sypos);

@@ -13,21 +13,21 @@ public class AKrellmPreferencesActivity extends PreferenceActivity {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.prefs);
 
-        Preference circlePreference = getPreferenceScreen().findPreference("numberOfCircles");
-        circlePreference.setOnPreferenceChangeListener(numberCheckListener);
+        // Preference circlePreference = getPreferenceScreen().findPreference("numberOfCircles");
+        // circlePreference.setOnPreferenceChangeListener(numberCheckListener);
     }
     
-    Preference.OnPreferenceChangeListener numberCheckListener = new OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue) {
-                if (newValue != null && newValue.toString().length() > 0 
-                    && newValue.toString().matches("\\d*")) {
-                    return true;
-                }
-                Toast.makeText(AKrellmPreferencesActivity.this, "Invalid Input",
-                               Toast.LENGTH_SHORT).show();
-                return false;
-            }
+    // Preference.OnPreferenceChangeListener numberCheckListener = new OnPreferenceChangeListener() {
+    //         @Override
+    //         public boolean onPreferenceChange(Preference preference, Object newValue) {
+    //             if (newValue != null && newValue.toString().length() > 0 
+    //                 && newValue.toString().matches("\\d*")) {
+    //                 return true;
+    //             }
+    //             Toast.makeText(AKrellmPreferencesActivity.this, "Invalid Input",
+    //                            Toast.LENGTH_SHORT).show();
+    //             return false;
+    //         }
                 
-        };
+    //     };
 }
