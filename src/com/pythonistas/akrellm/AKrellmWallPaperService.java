@@ -52,6 +52,7 @@ public class AKrellmWallPaperService extends WallpaperService {
         private Paint bmPaint = new Paint();
         private Paint cpaint = new Paint();
         private Paint cpaintBlur = new Paint();
+        private Paint cpaintOld = new Paint();
         private Paint lpaint = new Paint();
         private Paint lpaintBlur = new Paint();
         private Paint monthPaint = new Paint();
@@ -192,33 +193,33 @@ public class AKrellmWallPaperService extends WallpaperService {
 
 
             bmPaint.setAntiAlias(true);
-            //bmPaint.setAlpha(35);
             bmPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.OVERLAY));
 
             cpaint.setAntiAlias(true);
-            cpaint.setColor(Color.argb(248, 255, 255, 255));
+            cpaint.setColor(Color.argb(105, 255, 255, 255));
             cpaint.setStyle(Paint.Style.STROKE);
             cpaint.setStrokeJoin(Paint.Join.ROUND);
             cpaint.setStrokeWidth(15f);
-            //cpaint.setShader(fillBMPshader);
-
 
             cpaintBlur.set(paint);
-            cpaintBlur.setColor(Color.argb(235, red, green, blue));
+            cpaintBlur.setColor(Color.argb(238, red, green, blue));
             cpaintBlur.setStyle(Paint.Style.STROKE);
             cpaintBlur.setStrokeJoin(Paint.Join.ROUND);
             cpaintBlur.setStrokeWidth(30f);
             cpaintBlur.setMaskFilter(new BlurMaskFilter(15, BlurMaskFilter.Blur.NORMAL));
-            //cpaintBlur.setShader(fillBMPshader);
 
+            cpaintOld.set(paint);
+            cpaintOld.setColor(Color.argb(138, red, green, blue));
+            cpaintOld.setStyle(Paint.Style.STROKE);
+            cpaintOld.setStrokeJoin(Paint.Join.ROUND);
+            cpaintOld.setStrokeWidth(30f);
+            cpaintOld.setMaskFilter(new BlurMaskFilter(10, BlurMaskFilter.Blur.NORMAL));
 
             lpaint.setAntiAlias(true);
             lpaint.setColor(Color.argb(248, 255, 255, 255));
             lpaint.setStyle(Paint.Style.STROKE);
             lpaint.setStrokeJoin(Paint.Join.ROUND);
             lpaint.setStrokeWidth(2f);
-            //lpaint.setShader(fillBMPshader);
-
 
             lpaintBlur.set(paint);
             lpaintBlur.setColor(Color.argb(135, red, green, blue));
@@ -230,7 +231,6 @@ public class AKrellmWallPaperService extends WallpaperService {
             //Initialize the bitmap object by loading an image from the resources folder  
             fillBMP = BitmapFactory.decodeResource(getResources(), R.drawable.akrellmpolar);  
             //Initialize the BitmapShader with the Bitmap object and set the texture tile mode  
-            //fillBMPshader = new BitmapShader(fillBMP, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);  
             
             //Define the lines path
             getStats();
@@ -245,6 +245,12 @@ public class AKrellmWallPaperService extends WallpaperService {
         public void onVisibilityChanged(boolean visible) {
             this.visible = visible;
             if (visible) {
+                DisplayMetrics metrics = new DisplayMetrics();  
+                Display display = ((WindowManager) getSystemService(WINDOW_SERVICE)).getDefaultDisplay();  
+                display.getMetrics(metrics);  
+                width = display.getWidth() / 2;
+                height = display.getHeight() / 2 ;
+
                 handler.post(drawRunner);
             } else {
                 handler.removeCallbacks(drawRunner);
@@ -281,24 +287,6 @@ public class AKrellmWallPaperService extends WallpaperService {
             return null;
         }
         
-        // @Override
-        // public void onTouchEvent(MotionEvent event) {
-        //     if ( (event.getAction() == MotionEvent.ACTION_DOWN)) {
-        //         handler.removeCallbacks(drawRunner);
-        //         touchX = event.getX();
-        //         touchY = event.getY();
-        //     }
-            
-        //     else if ( (event.getAction() == MotionEvent.ACTION_UP)) {
-        //         if ( (touchX==event.getX()) && (touchY==event.getY()) && (event.getEventTime()-event.getDownTime()<1250)) {
-        //             touchState = (touchState+1) %3;
-        //                 if (visible){
-        //                     handler.post(drawRunner);
-        //                 }
-        //             }
-        //     }
-        //     super.onTouchEvent(event);
-        // }
         
         private void draw() {
             SurfaceHolder holder = getSurfaceHolder();
@@ -308,10 +296,10 @@ public class AKrellmWallPaperService extends WallpaperService {
                 if (canvas != null) {
                     canvas.drawColor(Color.BLACK);
                     //draw the old values before updating
-                    drawOldCircles(canvas);
+                    drawCircles(canvas, cpaintOld, 0);
                     getStats();
-                    drawBackground(canvas);
-                    drawCircles(canvas);
+                    drawCircles(canvas, cpaintBlur, 10);
+
                     switch ( touchState ) {
                     case 0:
                         drawDate(canvas);
@@ -324,6 +312,8 @@ public class AKrellmWallPaperService extends WallpaperService {
                         drawLines(canvas);
                         break;
                     }
+                    drawBackground(canvas);
+                    drawCircles(canvas, cpaint, 0);
                 }
             } finally {
                 if (canvas != null)
@@ -341,13 +331,7 @@ public class AKrellmWallPaperService extends WallpaperService {
             sysmem = top.meminfo(active);
             sysbattery = top.battery();
             systemp = top.temp();
-            //systemp = 0;
             date = top.date();
-
-            //try {
-            //  Thread.sleep(1000);
-            //} catch (Exception e) {}
-
         }
         
         private void drawBackground(Canvas canvas) {
@@ -355,45 +339,34 @@ public class AKrellmWallPaperService extends WallpaperService {
             canvas.drawBitmap(fillBMP, new Matrix(), bmPaint);
         }
         
-        private void drawCircles(Canvas canvas) {
-            //rect.set(width-400, height-400, width+400, height+400);
-            //canvas.drawRect(rect, blackpaint);
-
+        private void drawCircles(Canvas canvas, Paint p, int offset) {
             //draw load
             int step = 55;
             int pos = 20;
             rect.set(width-pos, height-pos, width+pos, height+pos);
-            canvas.drawArc(rect, -90, 360*(sysload.one/2), false, cpaint);
-            canvas.drawArc(rect, -95, 360*(sysload.one/2)+10, false, cpaintBlur);
+            canvas.drawArc(rect, -90, 360*(sysload.one/2)+offset, false, p);
 
             pos += step;
             rect.set(width-pos, height-pos, width+pos, height+pos);
-            canvas.drawArc(rect, -90, 360*syscpu, false, cpaint);
-            canvas.drawArc(rect, -95, 360*syscpu+10, false, cpaintBlur);
+            canvas.drawArc(rect, -95, 360*syscpu+offset, false, p);
             
             pos += step;
             rect.set(width-pos, height-pos, width+pos, height+pos);
-            canvas.drawArc(rect, -90, 360*sysmem, false, cpaint);
-            canvas.drawArc(rect, -95, 360*sysmem+10, false, cpaintBlur);
+            canvas.drawArc(rect, -95, 360*sysmem+offset, false, p);
 
             if (systemp > 0){
                 pos += step;
                 rect.set(width-pos, height-pos, width+pos, height+pos);
-                canvas.drawArc(rect, -90, 360*(systemp/50000.0f), false, cpaint);
-                canvas.drawArc(rect, -95, 360*(systemp/50000.0f)+10, false, cpaintBlur);
+                canvas.drawArc(rect, -95, 360*(systemp/50000.0f)+offset, false, p);
             }
             
             pos += step;
             rect.set(width-pos, height-pos, width+pos, height+pos);
-            canvas.drawArc(rect, -90, 360*(sysbattery/100.0f), false, cpaint);
-            canvas.drawArc(rect, -95, 360*(sysbattery/100.0f)+10, false, cpaintBlur);
+            canvas.drawArc(rect, -95, 360*(sysbattery/100.0f)+offset, false, p);
 
         }
 
         private void drawOldCircles(Canvas canvas) {
-            //rect.set(width-400, height-400, width+400, height+400);
-            //canvas.drawRect(rect, blackpaint);
-
             //draw load
             int step = 55;
             int pos = 20;
